@@ -14,7 +14,8 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
 bot = commands.Bot(command_prefix='!')
-
+# testing
+hi = True
 # Events
 # 8 o'clock in the morning, UTC
 time_for_thing_to_happen = datetime.time(hour=11, minute=30)
