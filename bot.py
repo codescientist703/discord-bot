@@ -2,7 +2,7 @@ import os
 import discord
 from dotenv import load_dotenv
 from discord.ext import commands
-
+from replit import db
 import requests
 import random
 
@@ -24,13 +24,8 @@ time_for_thing_to_happen = datetime.time(hour=11, minute=30)
 def get_problem():
     current_date = datetime.datetime.today().weekday()
     ans = ''
-    with open('data.csv') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            day_num = int(row['date'])
-            if day_num == current_date:
-                ans += row['content']
-                break
+    if current_date in db.keys():
+      ans = db[current_date]['content']
     return ans
 
 
@@ -147,11 +142,11 @@ async def daily(ctx, statement, url, type, difficulty, date):
     **Type**: {type}
     **Difficulty**: {difficulty}
     """
-    with open('data.csv', 'a') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=[
-                                'date', 'content', 'author'], quoting=csv.QUOTE_ALL)
-        writer.writerow({'date': date, 'content': content,
-                         'author': ctx.message.author.name})
+    data = {
+      'content': content,
+      'author': ctx.message.author.name,
+    }
+    db[date] = data
     await ctx.send(f'Problem successfully added by {ctx.message.author.mention}')
     await ctx.message.delete()
 
