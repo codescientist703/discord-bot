@@ -5,20 +5,23 @@ from discord.ext import commands
 from replit import db
 import requests
 import random
-
 import asyncio
 import datetime
-import csv
 load_dotenv()
+import keep_alive
+
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
-bot = commands.Bot(command_prefix='!')
-# testing
-hi = True
+help_command = commands.DefaultHelpCommand(
+    no_category = 'All Commands',
+)
+bot = commands.Bot(command_prefix='#', help_command=help_command)
+
+
 # Events
 # 8 o'clock in the morning, UTC
-time_for_thing_to_happen = datetime.time(hour=11, minute=30)
+time_for_thing_to_happen = datetime.time(hour=2, minute=30)
 
 
 def get_problem():
@@ -26,10 +29,12 @@ def get_problem():
     ans = ''
     if current_date in db.keys():
       ans = db[current_date]['content']
+      del db[current_date]
+    
     return ans
 
 
-async def sometask():
+async def fetchproblem():
     while True:
         now = datetime.datetime.utcnow()
         date = now.date()
@@ -38,11 +43,11 @@ async def sometask():
         then = datetime.datetime.combine(date, time_for_thing_to_happen)
         await discord.utils.sleep_until(then)
         print("pork o clock")
-        problem = get_problem()
-        channel = bot.get_channel(784737573293654026)
+        problem = get_problem()     
+        channel = bot.get_channel(776472204584943669)
         if problem != '':
-            await channel.send(problem)
-
+          await channel.send(problem)
+    
 
 # errors in tasks raise silently normally so lets make them speak up
 
@@ -54,7 +59,7 @@ def exception_catching_callback(task):
 
 @bot.event
 async def on_ready():
-    task = asyncio.create_task(sometask())
+    task = asyncio.create_task(fetchproblem())
     task.add_done_callback(exception_catching_callback)
     print(datetime.datetime.utcnow())
     print(f'{bot.user.name} has connected to Discord!')
@@ -110,7 +115,7 @@ async def joke(ctx):
     await ctx.message.delete()
 
 
-@ bot.command(name='roll_dice', help='Simulates rolling dice.')
+@ bot.command(help='Simulates rolling dice.')
 async def roll(ctx, number_of_dice: int, number_of_sides: int):
     dice = [
         str(random.choice(range(1, number_of_sides + 1)))
@@ -154,14 +159,25 @@ async def daily(ctx, statement, url, type, difficulty, date):
 @ bot.command(help='Displays the schedule')
 async def schedule(ctx):
     result = "``Date  Author \n"
-    with open('data.csv') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            result += " " + row['date'] + "    " + row['author'] + "  " + '\n'
+    for row in db.keys():
+      result += " " + row + "    " + db[row]['author'] + "  " + '\n'
 
     result += "``"
     await ctx.send(result)
     await ctx.message.delete()
 
+@ bot.command(help='Delete a particular date schedule')
+async def delete(ctx, date):
+    if date in db.keys():
+      del db[date]
+      await ctx.send(f'Problem successfully deleted by {ctx.message.author.mention}  for the date- {date}')
+    else:
+      await ctx.send(f'No problem schedule found for the date- {date}')
 
+    await ctx.message.delete()
+
+    
+   
+
+keep_alive.keep_alive()
 bot.run(TOKEN)
