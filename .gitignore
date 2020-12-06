@@ -3,3 +3,5 @@
 discord.code-workspace
 data.csv
 requirements.txt
+Pipfile.lock
+Pipfile
